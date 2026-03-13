@@ -1,16 +1,18 @@
 import json
 import ast
+import asyncio
 from typing import List, Dict
 from openai import OpenAI, AsyncOpenAI
 
 
 class LlmAgent:
-    def __init__(self, llmClient:AsyncOpenAI, model_name:str, max_tokens:int, temperature:float, top_p:float):
+    def __init__(self, llmClient:AsyncOpenAI, model_name:str, max_tokens:int, temperature:float, top_p:float, semaphore:asyncio.Semaphore):
         self.llm         = llmClient
         self.model_name  = model_name
         self.max_tokens  = max_tokens
         self.temperature = temperature
         self.top_p       = top_p
+        self.semaphore   = semaphore
     
     def parse_content(self, content:str) -> List|Dict:
         try:
@@ -43,10 +45,11 @@ class LlmAgent:
         #                         temperature=self.temperature,
         #                         top_p=self.top_p
         #                     )
-        response = await self.llm.chat.completions.create(
-                                model=self.model_name,
-                                messages=prompts
-                            )
+        async with self.semaphore:
+            response = await self.llm.chat.completions.create(
+                                    model=self.model_name,
+                                    messages=prompts
+                                )
         
         reply_content = response.choices[0].message.content
         reply_data    = self.parse_content(reply_content)
