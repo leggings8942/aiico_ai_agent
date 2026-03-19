@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LP ベクトル生成 — 計算部 数式解説</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  :root {
+    --bg: #0e1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --surface3: #21283b;
+    --border: #2a3040;
+    --border-light: #363e50;
+    --text: #c9d1d9;
+    --text-muted: #8b949e;
+    --text-bright: #f0f6fc;
+    --accent: #58a6ff;
+    --green: #7ee787;
+    --purple: #d2a8ff;
+    --orange: #ffa657;
+    --red: #ff7b72;
+    --cyan: #79c0ff;
+    --yellow: #e3b341;
+    --pink: #f778ba;
+    --code-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Source Serif 4', 'Noto Sans JP', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.85;
+    font-size: 15.5px;
+  }
+
+  .container { max-width: 980px; margin: 0 auto; padding: 0 36px; }
+
+  /* ── Header ── */
+  header {
+    padding: 72px 0 44px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 56px;
+  }
+  .header-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  header .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  header h1 {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 1.35;
+    color: var(--text-bright);
+    margin-bottom: 14px;
+  }
+  header .subtitle {
+    font-size: 16px;
+    color: var(--text-muted);
+    max-width: 720px;
+    line-height: 1.8;
+  }
+
+  /* ── Section ── */
+  section { margin-bottom: 64px; }
+  section h2 {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    color: var(--text-bright);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  section h3 {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--accent);
+    margin: 28px 0 10px;
+  }
+  p { margin-bottom: 14px; }
+
+  /* ── Pipeline ── */
+  .pipeline-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px 24px;
+    margin: 28px 0;
+    overflow-x: auto;
+  }
+
+  /* ── Step Card ── */
+  .step {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 28px;
+    margin: 44px 0;
+  }
+  .step:hover { border-color: var(--border-light); }
+  .step-badge {
+    position: absolute;
+    top: -13px;
+    left: 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 3px 14px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    color: var(--bg);
+  }
+  .step-badge.s1 { background: var(--accent); }
+  .step-badge.s2 { background: var(--green); }
+  .step-badge.s3 { background: var(--purple); }
+  .step-badge.s4 { background: var(--orange); }
+  .step-badge.s5 { background: var(--red); }
+  .step-title {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text-bright);
+    margin-bottom: 14px;
+  }
+
+  /* ── Math ── */
+  .math-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    margin: 18px 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  /* ── Code ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text);
+  }
+  .kw { color: var(--red); }
+  .fn { color: var(--purple); }
+  .str { color: var(--green); }
+  .cmt { color: var(--text-muted); font-style: italic; }
+  .vr { color: var(--cyan); }
+  .num { color: var(--orange); }
+  .punc { color: var(--text-muted); }
+
+  /* ── JSON block ── */
+  .json-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .json-key { color: var(--cyan); }
+  .json-str { color: var(--green); }
+  .json-num { color: var(--orange); }
+  .json-brace { color: var(--text-muted); }
+
+  /* ── Shape badge ── */
+  .shape {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 4px;
+    margin: 0 2px;
+  }
+  .shape.blue   { background: rgba(88,166,255,0.12); color: var(--accent); border: 1px solid rgba(88,166,255,0.25); }
+  .shape.green  { background: rgba(126,231,135,0.12); color: var(--green); border: 1px solid rgba(126,231,135,0.25); }
+  .shape.purple { background: rgba(210,168,255,0.12); color: var(--purple); border: 1px solid rgba(210,168,255,0.25); }
+  .shape.orange { background: rgba(255,166,87,0.12); color: var(--orange); border: 1px solid rgba(255,166,87,0.25); }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 13px;
+  }
+  .data-table th {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-bottom: 2px solid var(--border);
+    color: var(--accent);
+    font-size: 11.5px;
+    letter-spacing: 0.5px;
+  }
+  .data-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .data-table tr:hover td { background: rgba(88,166,255,0.03); }
+  .data-table code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--cyan);
+  }
+
+  /* ── Embedding Table (matrix visualization) ── */
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .matrix-table th {
+    padding: 8px 10px;
+    background: var(--surface3);
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+    font-weight: 500;
+    color: var(--purple);
+    font-size: 11px;
+  }
+  .matrix-table th:first-child {
+    text-align: left;
+    color: var(--text-muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-width: 280px;
+  }
+  .matrix-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(42,48,64,0.6);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11.5px;
+  }
+  .matrix-table td:first-child {
+    text-align: left;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+  }
+  .matrix-table tr:hover td { background: rgba(210,168,255,0.04); }
+  .matrix-table .pos-row td:first-child { border-left: 3px solid var(--green); padding-left: 12px; }
+  .matrix-table .neg-row td:first-child { border-left: 3px solid var(--red); padding-left: 12px; }
+  .val-pos { color: var(--green); }
+  .val-neg { color: var(--red); }
+
+  /* ── IO Boxes ── */
+  .io-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 18px 0;
+  }
+  @media (max-width: 700px) { .io-row { grid-template-columns: 1fr; } }
+  .io-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+  }
+  .io-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .io-label.input { color: var(--accent); }
+  .io-label.output { color: var(--green); }
+
+  /* ── Note ── */
+  .note {
+    background: rgba(88,166,255,0.05);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+  .note strong { color: var(--accent); }
+  .note.insight {
+    background: rgba(255,166,87,0.05);
+    border-left-color: var(--orange);
+  }
+  .note.insight strong { color: var(--orange); }
+
+  /* ── Arrow connector between steps ── */
+  .arrow-down {
+    text-align: center;
+    padding: 4px 0;
+    color: var(--border-light);
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* ── Highlight inline ── */
+  .hl { color: var(--yellow); font-weight: 500; }
+  .hl-pos { color: var(--green); }
+  .hl-neg { color: var(--red); }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 0 56px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<header>
+  <div class="header-icon">🧮</div>
+  <div class="label">計算部（本命）</div>
+  <h1>LP ベクトルの生成</h1>
+  <p class="subtitle">LLM が出力した「商品シーン × 重み」を、スポット空間上の係数ベクトルに変換する。<br>この係数ベクトルが、ADID ごとの親和性スコア算出のコアになる。</p>
+</header>
+
+<!-- ============================================================ -->
+<!-- 0. PIPELINE OVERVIEW -->
+<!-- ============================================================ -->
+<section>
+  <h2>ステップ概要</h2>
+
+  <div class="pipeline-wrap">
+    <svg viewBox="0 0 820 560" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+      <defs>
+        <marker id="a" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#58a6ff"/></marker>
+        <marker id="ad" markerWidth="5" markerHeight="7" refX="2.5" refY="7" orient="auto"><polygon points="0 0,5 0,2.5 7" fill="#58a6ff"/></marker>
+      </defs>
+
+      <!-- ── LLM Output (top) ── -->
+      <rect x="250" y="12" width="300" height="52" rx="26" fill="none" stroke="#363e50" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <text x="400" y="33" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10" letter-spacing="1">LLM 出力 JSON</text>
+      <text x="400" y="50" text-anchor="middle" fill="#8b949e" font-family="Noto Sans JP" font-size="10">positive / negative キーワード＋重み</text>
+
+      <!-- Arrow -->
+      <line x1="400" y1="64" x2="400" y2="92" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#ad)"/>
+
+      <!-- Step 1 -->
+      <rect x="200" y="100" width="400" height="54" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.3"/>
+      <text x="222" y="123" fill="#58a6ff" font-family="JetBrains Mono" font-size="10" font-weight="600">STEP 1</text>
+      <text x="290" y="123" fill="#c9d1d9" font-family="Noto Sans JP" font-size="12">形式変換（positive/negative → 符号付きリスト）</text>
+      <text x="400" y="143" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">lp_keywords: list[str],  lp_weights: list[float]</text>
+
+      <line x1="400" y1="154" x2="400" y2="182" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#ad)"/>
+
+      <!-- Step 2 -->
+      <rect x="200" y="190" width="400" height="54" rx="10" fill="#161b22" stroke="#7ee787" stroke-width="1.3"/>
+      <text x="222" y="213" fill="#7ee787" font-family="JetBrains Mono" font-size="10" font-weight="600">STEP 2</text>
+      <text x="290" y="213" fill="#c9d1d9" font-family="Noto Sans JP" font-size="12">L1 正規化（重みの総和を 1 に統一）</text>
+      <text x="400" y="233" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">lp_weights: 正規化済み  (1 × M)</text>
+
+      <line x1="400" y1="244" x2="400" y2="272" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#ad)"/>
+
+      <!-- Step 3 -->
+      <rect x="200" y="280" width="400" height="54" rx="10" fill="#161b22" stroke="#d2a8ff" stroke-width="1.3"/>
+      <text x="222" y="303" fill="#d2a8ff" font-family="JetBrains Mono" font-size="10" font-weight="600">STEP 3</text>
+      <text x="290" y="303" fill="#c9d1d9" font-family="Noto Sans JP" font-size="12">Embedding（BAAI/bge-m3）で高次元空間へ写像</text>
+      <text x="400" y="323" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">lp_matrix: M × 1024</text>
+
+      <line x1="400" y1="334" x2="400" y2="362" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#ad)"/>
+
+      <!-- Step 4 (larger) -->
+      <rect x="140" y="370" width="520" height="64" rx="10" fill="#161b22" stroke="#ffa657" stroke-width="1.3"/>
+      <text x="162" y="395" fill="#ffa657" font-family="JetBrains Mono" font-size="10" font-weight="600">STEP 4</text>
+      <text x="230" y="395" fill="#c9d1d9" font-family="Noto Sans JP" font-size="12">行列積でスポット係数ベクトルを算出</text>
+      <text x="400" y="420" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="11">(1×M) · (M×1024) · (1024×S) → (1×S)</text>
+
+      <!-- spots_matrix input -->
+      <rect x="10" y="378" width="110" height="46" rx="8" fill="#161b22" stroke="#363e50" stroke-width="1"/>
+      <text x="65" y="398" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="9">spots_matrix</text>
+      <text x="65" y="414" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="9">(S × 1024)</text>
+      <line x1="120" y1="401" x2="133" y2="401" stroke="#363e50" stroke-width="1.2" marker-end="url(#a)"/>
+
+      <line x1="400" y1="434" x2="400" y2="462" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#ad)"/>
+
+      <!-- Step 5 -->
+      <rect x="200" y="470" width="400" height="54" rx="10" fill="#161b22" stroke="#ff7b72" stroke-width="1.3"/>
+      <text x="222" y="493" fill="#ff7b72" font-family="JetBrains Mono" font-size="10" font-weight="600">STEP 5</text>
+      <text x="290" y="493" fill="#c9d1d9" font-family="Noto Sans JP" font-size="12">L2 正規化（ベクトルの長さを 1 に統一）</text>
+      <text x="400" y="513" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">lp_coefficient: L2 正規化済み  (1 × S)</text>
+
+      <!-- Final output -->
+      <line x1="400" y1="524" x2="400" y2="548" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#ad)"/>
+      <text x="400" y="558" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="10" font-weight="600">✓ LP 係数ベクトル完成</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- STEP 1 -->
+<!-- ============================================================ -->
+<section>
+  <div class="step">
+    <div class="step-badge s1">STEP 1</div>
+    <div class="step-title">LLM 出力形式の変換</div>
+
+    <p>LLM が返す JSON を <code>(keywords, weights)</code> の平行リストに変換する。<br><span class="hl-neg">negative</span> シーンは<strong>重みを反転（符号をマイナス）</strong>することで、ベクトル空間上で「逆方向」を表現する。</p>
+
+    <div class="io-row">
+      <div class="io-box">
+        <div class="io-label input">INPUT — LLM 出力 JSON</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;white-space:pre;"><span class="json-brace">{</span>
+  <span class="json-key">"positive"</span>: <span class="json-brace">{</span>
+    <span class="json-str">"コラボカフェの推し色テーブルで
+     生誕祭の祭壇を即席セット"</span>: <span class="json-num">0.95</span>,
+    <span class="json-str">"ライブ会場のグッズ交換エリアで
+     缶バッジのトレード待機"</span>:   <span class="json-num">0.93</span>,
+    ...
+  <span class="json-brace">}</span>,
+  <span class="json-key">"negative"</span>: <span class="json-brace">{</span>
+    <span class="json-str">"満員電車の車内で祭壇を広げて
+     撮影しようとする"</span>:     <span class="json-num">0.98</span>,
+    <span class="json-str">"ライブ本編中の客席で自立台座
+     を設置して視界を遮る"</span>: <span class="json-num">0.97</span>,
+    ...
+  <span class="json-brace">}</span>
+<span class="json-brace">}</span></div>
+      </div>
+      <div class="io-box">
+        <div class="io-label output">OUTPUT — 平行リスト</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;white-space:pre;"><span class="vr">lp_keywords</span> = [
+  <span class="str">"コラボカフェの..."</span>,
+  <span class="str">"ライブ会場の..."</span>,
+  ...,
+  <span class="str">"満員電車の..."</span>,
+  <span class="str">"ライブ本編中の..."</span>,
+  ...
+]
+
+<span class="vr">lp_weights</span> = [
+  <span class="val-pos">+0.95</span>, <span class="val-pos">+0.93</span>, ...,
+  <span class="val-neg">-0.98</span>, <span class="val-neg">-0.97</span>, ...
+]
+<span class="cmt"># ↑positive はそのまま</span>
+<span class="cmt"># ↑negative は符号反転</span></div>
+      </div>
+    </div>
+
+    <div class="code-block"><span class="vr">items_positive</span> = <span class="fn">list</span>(analysis_data[<span class="str">'positive'</span>].<span class="fn">items</span>())
+<span class="vr">items_negative</span> = <span class="fn">list</span>(analysis_data[<span class="str">'negative'</span>].<span class="fn">items</span>())
+<span class="vr">lp_keywords</span>    = [key <span class="kw">for</span> key, _ <span class="kw">in</span> items_positive] + [key <span class="kw">for</span> key, _ <span class="kw">in</span> items_negative]
+<span class="vr">lp_weights</span>     = [val <span class="kw">for</span> _, val <span class="kw">in</span> items_positive] + [<span class="num">-</span>val <span class="kw">for</span> _, val <span class="kw">in</span> items_negative]</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- STEP 2 -->
+<!-- ============================================================ -->
+<section>
+  <div class="step">
+    <div class="step-badge s2">STEP 2</div>
+    <div class="step-title">L1 正規化</div>
+
+    <p>重みベクトルの絶対値の総和が 1 になるよう正規化する。<br>positive / negative の比率にかかわらず、<strong>重みのスケールを統一する</strong>ためのステップ。</p>
+
+    <div class="math-block">
+      $$\vec{w}_{L1} = \frac{\vec{w}}{\|\vec{w}\|_1} = \frac{\vec{w}}{\displaystyle\sum_{i=1}^{M} |w_i|}$$
+    </div>
+
+    <div class="code-block"><span class="vr">total_weight</span> = np.<span class="fn">sum</span>(np.<span class="fn">abs</span>(<span class="vr">lp_weights</span>))
+<span class="vr">lp_weights</span>   = np.<span class="fn">array</span>(<span class="vr">lp_weights</span>) / <span class="vr">total_weight</span></div>
+
+    <div class="note">
+      <strong>なぜ L1 か：</strong>L1 ノルムで正規化すると、重みは「割合」として解釈できる。$w_i = 0.3$ なら、キーワード $i$ が LP 全体の意味の 30% を占める。ポジティブ・ネガティブの重みが混在しているため、L2 ではなく L1（絶対値和）で正規化している。
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- STEP 3 -->
+<!-- ============================================================ -->
+<section>
+  <div class="step">
+    <div class="step-badge s3">STEP 3</div>
+    <div class="step-title">Embedding モデルによる高次元空間への写像</div>
+
+    <p><code>BAAI/bge-m3</code> モデルで各キーワードを <strong>1024 次元</strong>の埋め込みベクトルに変換する。<br><code>normalize_embeddings=True</code> により、各行ベクトルは L2 正規化済み（長さ = 1）。</p>
+
+    <div class="code-block"><span class="vr">model</span>     = <span class="fn">SentenceTransformer</span>(<span class="str">'BAAI/bge-m3'</span>)
+<span class="vr">lp_vector</span> = <span class="vr">lp_weights</span>.<span class="fn">reshape</span>(<span class="num">1</span>, <span class="num">-1</span>)                             <span class="cmt"># 形状: 1 × M</span>
+<span class="vr">lp_matrix</span> = <span class="vr">model</span>.<span class="fn">encode</span>(<span class="vr">lp_keywords</span>, normalize_embeddings=<span class="kw">True</span>)  <span class="cmt"># 形状: M × 1024</span></div>
+
+    <h3>lp_matrix のデータ構造イメージ（M × 1024）</h3>
+    <div style="overflow-x:auto;">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th>商品シーン（M 行）</th>
+          <th>$d_1$</th>
+          <th>$d_2$</th>
+          <th>$\cdots$</th>
+          <th>$d_{1024}$</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="pos-row"><td>コラボカフェの推し色テーブルで生誕祭の祭壇を即席セット</td><td class="val-pos">0.012</td><td class="val-neg">−0.045</td><td>$\cdots$</td><td class="val-pos">0.088</td></tr>
+        <tr class="pos-row"><td>ライブ会場のグッズ交換エリアで缶バッジのトレード待機</td><td class="val-neg">−0.023</td><td class="val-pos">0.071</td><td>$\cdots$</td><td class="val-neg">−0.012</td></tr>
+        <tr><td style="color:var(--text-muted);text-align:center;" colspan="5">$\vdots$</td></tr>
+        <tr class="neg-row"><td>満員電車の車内で祭壇を広げて撮影しようとする</td><td class="val-pos">0.055</td><td class="val-neg">−0.003</td><td>$\cdots$</td><td class="val-pos">0.041</td></tr>
+        <tr class="neg-row"><td>ライブ本編中の客席で自立台座を設置して視界を遮る</td><td class="val-pos">0.099</td><td class="val-neg">−0.065</td><td>$\cdots$</td><td class="val-pos">0.010</td></tr>
+        <tr><td style="color:var(--text-muted);text-align:center;" colspan="5">$\vdots$</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+      <span style="display:inline-block;width:10px;height:3px;background:var(--green);border-radius:2px;margin-right:4px;vertical-align:middle;"></span>positive シーン
+      <span style="margin:0 12px;"></span>
+      <span style="display:inline-block;width:10px;height:3px;background:var(--red);border-radius:2px;margin-right:4px;vertical-align:middle;"></span>negative シーン
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- STEP 4 -->
+<!-- ============================================================ -->
+<section>
+  <div class="step">
+    <div class="step-badge s4">STEP 4</div>
+    <div class="step-title">LP からみたスポットの重要度ベクトル</div>
+
+    <p>3 つの行列を連鎖的に掛け合わせ、<strong>「この商品がどのスポットと親和性が高いか」</strong>を表す <span class="shape orange">1 × S</span> の係数ベクトルを求める。</p>
+
+    <div class="math-block">
+      $$\underbrace{\vec{lp\_coefficient}}_{1 \times S} \;=\; \underbrace{\vec{lp\_vector}}_{1 \times M} \;\cdot\; \underbrace{lp\_matrix}_{M \times 1024} \;\cdot\; \underbrace{spots\_matrix^\top}_{1024 \times S}$$
+    </div>
+
+    <p>この行列積は<strong>2 段階に分解して理解する</strong>のが本質的である。</p>
+
+    <!-- ──────────────────────────────── -->
+    <!-- Phase 1: Centroid -->
+    <!-- ──────────────────────────────── -->
+    <h3>前半：重心ベクトルの算出</h3>
+
+    <div class="math-block">
+      $$\underbrace{\vec{v}_{\text{centroid}}}_{1 \times 1024} \;=\; \underbrace{\vec{lp\_vector}}_{1 \times M} \;\cdot\; \underbrace{lp\_matrix}_{M \times 1024} \;=\; \sum_{i=1}^{M} w_i \cdot \vec{e}_i$$
+    </div>
+
+    <!-- Phase 1 diagram -->
+    <div class="pipeline-wrap" style="padding:24px 16px;">
+      <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+        <defs>
+          <marker id="a3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#e3b341"/></marker>
+        </defs>
+        <!-- lp_vector -->
+        <rect x="20" y="20" width="160" height="60" rx="8" fill="none" stroke="#58a6ff" stroke-width="1.3"/>
+        <text x="100" y="42" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono" font-size="10" font-weight="500">lp_vector</text>
+        <text x="100" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1 × M</text>
+        <text x="100" y="100" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono" font-size="9">重み = 重要度</text>
+        <text x="100" y="114" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono" font-size="9">L1正規化 → Σ|w|=1</text>
+
+        <text x="206" y="52" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="18">·</text>
+
+        <!-- lp_matrix -->
+        <rect x="230" y="20" width="160" height="60" rx="8" fill="none" stroke="#d2a8ff" stroke-width="1.3"/>
+        <text x="310" y="42" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono" font-size="10" font-weight="500">lp_matrix</text>
+        <text x="310" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">M × 1024</text>
+        <text x="310" y="100" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono" font-size="9">位置ベクトル = 埋め込み</text>
+        <text x="310" y="114" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono" font-size="9">L2正規化 → 単位球面上</text>
+
+        <text x="416" y="52" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="18">=</text>
+
+        <!-- centroid -->
+        <rect x="440" y="14" width="320" height="72" rx="10" fill="rgba(227,179,65,0.08)" stroke="#e3b341" stroke-width="1.5"/>
+        <text x="600" y="38" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="11" font-weight="600">v_centroid  （重心ベクトル）</text>
+        <text x="600" y="58" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1 × 1024</text>
+        <text x="600" y="74" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="9">⚠ L2正規化されていない</text>
+        <text x="600" y="110" text-anchor="middle" fill="#e3b341" font-family="Noto Sans JP" font-size="11" font-weight="500">商品特徴を最もよく表現する 1 本のベクトル</text>
+
+        <!-- annotation: what this means -->
+        <rect x="80" y="140" width="600" height="40" rx="6" fill="rgba(227,179,65,0.04)" stroke="rgba(227,179,65,0.15)" stroke-width="1"/>
+        <text x="380" y="158" text-anchor="middle" fill="#e3b341" font-family="Noto Sans JP" font-size="11">L1正規化された重み × L2正規化された位置ベクトル → <tspan font-weight="700">重心ベクトル</tspan></text>
+        <text x="380" y="174" text-anchor="middle" fill="#8b949e" font-family="Noto Sans JP" font-size="10">重要度が高いシーンほど重心を強く引き寄せ、negative シーンは逆方向に押し出す</text>
+      </svg>
+    </div>
+
+    <div class="note">
+      <strong>なぜ「重心」なのか：</strong>$\vec{lp\_vector}$ は L1 正規化済み（$\sum |w_i| = 1$）、$lp\_matrix$ の各行は L2 正規化済み（$\|\vec{e}_i\| = 1$、単位球面上の点）。この組み合わせの行列積は、<strong>単位球面上の点群に対する加重平均 = 重心</strong>を求める操作に他ならない。
+    </div>
+
+    <p>この重心ベクトル $\vec{v}_{\text{centroid}}$ の幾何学的意味は以下の通り：</p>
+    <table class="data-table">
+      <thead><tr><th>要素</th><th>対応</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td>$w_i$（L1 正規化済み）</td><td>LLM が出力した商品シーンの<strong>重要度</strong></td><td>重心計算における<strong>重み</strong></td></tr>
+        <tr><td>$\vec{e}_i$（L2 正規化済み）</td><td>Embedding モデルが出力した商品シーンの<strong>埋め込みベクトル</strong></td><td>重心計算における<strong>位置ベクトル</strong>（単位球面上の点）</td></tr>
+        <tr><td>$\vec{v}_{\text{centroid}}$</td><td>LP の商品特徴を集約した<strong>代表ベクトル</strong></td><td>重要なシーンの方向に引き寄せられ、negative シーンの方向から遠ざかる</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note insight">
+      <strong>💡 重心ベクトルの大きさが持つ意味：</strong>$\vec{v}_{\text{centroid}}$ は L2 正規化されて<em>いない</em>。つまり、<strong>ベクトルの大きさ（ノルム）が情報を持つ</strong>。positive と negative のシーンが似た方向を向いていれば互いに打ち消し合い、ノルムは小さくなる。逆に、positive シーンが一貫した方向を向いている LP は大きなノルムを持ち、後続の計算でスポットとの親和度が強く出る。
+    </div>
+
+    <!-- ──────────────────────────────────────────────── -->
+    <!-- INTERACTIVE VISUALIZATION: Centroid Calculator  -->
+    <!-- ──────────────────────────────────────────────── -->
+    <h3>🎮 インタラクティブ：重心ベクトルの計算を体験する</h3>
+    <p>下の図は、1024 次元を <strong>2 次元に簡略化</strong>したものです。単位円の上に商品シーン（キーワード）が並んでおり、各スライダーで重みを変えると重心（黄色の ★）がリアルタイムに動きます。</p>
+
+    <div id="centroid-app" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0;">
+
+      <!-- Canvas + Controls layout -->
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+
+        <!-- Canvas area -->
+        <div style="flex:1;min-width:340px;">
+          <canvas id="centroid-canvas" width="540" height="540" style="width:100%;max-width:540px;height:auto;border-radius:8px;background:#0d1117;display:block;"></canvas>
+          <div id="centroid-info" style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);line-height:1.7;"></div>
+        </div>
+
+        <!-- Sliders panel -->
+        <div id="sliders-panel" style="flex:0 0 360px;min-width:280px;">
+          <div style="font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;color:var(--text-bright);margin-bottom:12px;">重み（lp_vector）を調整</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">スライダーを動かすと重心が移動します。<br>右に動かすと positive（寄与大）、左に動かすと negative（逆方向へ押し出す）。</div>
+          <div id="sliders-container" style="max-height:420px;overflow-y:auto;padding-right:8px;"></div>
+          <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="btn-cancel" style="font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 14px;background:rgba(255,123,114,0.1);color:var(--red);border:1px solid rgba(255,123,114,0.3);border-radius:6px;cursor:pointer;">正負を打ち消す</button>
+          </div>
+          <div style="margin-top:16px;padding:12px;background:var(--code-bg);border:1px solid var(--border);border-radius:6px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:6px;">LEGEND</div>
+            <div style="font-size:11px;line-height:2;font-family:'Noto Sans JP',sans-serif;">
+              <span style="display:inline-block;width:10px;height:10px;background:#7ee787;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>positive シーン（重心を引き寄せる）<br>
+              <span style="display:inline-block;width:10px;height:10px;background:#ff7b72;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>negative シーン（重心を押し出す）<br>
+              <span style="display:inline-block;width:10px;height:10px;background:#e3b341;border-radius:50%;margin-right:6px;vertical-align:middle;"></span><strong>★ 重心ベクトル</strong>（全ての加重平均）<br>
+              <span style="display:inline-block;width:10px;height:3px;background:#58a6ff;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>単位円（L2 正規化 = 長さ 1 の円）
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 計算過程のリアルタイム表示 -->
+    <div id="computation-trace" style="background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:20px 0;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.8;overflow-x:auto;">
+      <div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:12px;font-weight:600;">COMPUTATION TRACE — リアルタイム計算過程</div>
+      <div id="trace-step-b" style="margin-bottom:10px;"></div>
+      <div id="trace-step-c" style="margin-bottom:10px;"></div>
+      <div id="trace-result" style=""></div>
+    </div>
+
+    <script>
+    (function() {
+      // ================================================================
+      // lp_matrix: 16本の2次元単位ベクトル（M × 2 行列）
+      //   - positive 10本: y > 0（上半分）
+      //   - negative  6本: y < 0（下半分）
+      // 各ベクトルは L2 正規化済み（||e_i|| = 1 → 単位円上の点）
+      // ================================================================
+      const data = [
+        { label: 'コラボカフェで生誕祭',     vec: [ 0.34,  0.94], defaultW:  0.95, type: 'pos' },
+        { label: 'グッズ交換エリア',         vec: [ 0.71,  0.70], defaultW:  0.93, type: 'pos' },
+        { label: '推しぬい散歩',             vec: [ 0.91,  0.42], defaultW:  0.88, type: 'pos' },
+        { label: 'フォトスポット撮影',       vec: [ 0.57,  0.82], defaultW:  0.85, type: 'pos' },
+        { label: 'アニメイトで新作チェック',  vec: [-0.17,  0.98], defaultW:  0.82, type: 'pos' },
+        { label: '痛バッグでお出かけ',       vec: [-0.50,  0.87], defaultW:  0.80, type: 'pos' },
+        { label: 'コスプレ併せで合わせ撮影', vec: [-0.77,  0.64], defaultW:  0.78, type: 'pos' },
+        { label: '聖地巡礼で記念撮影',       vec: [-0.94,  0.34], defaultW:  0.75, type: 'pos' },
+        { label: '同人誌即売会で頒布',       vec: [ 0.10,  0.99], defaultW:  0.72, type: 'pos' },
+        { label: 'アクスタ並べて箱推し展示', vec: [-0.64,  0.77], defaultW:  0.70, type: 'pos' },
+        { label: '満員電車で祭壇撮影',       vec: [ 0.42, -0.91], defaultW: -0.98, type: 'neg' },
+        { label: '客席で台座設置し視界遮る', vec: [-0.26, -0.97], defaultW: -0.97, type: 'neg' },
+        { label: '公共施設で大声応援',       vec: [-0.71, -0.70], defaultW: -0.90, type: 'neg' },
+        { label: '路上にグッズ広げて通行妨害', vec: [ 0.77, -0.64], defaultW: -0.88, type: 'neg' },
+        { label: '病院待合室で推し布教',     vec: [-0.94, -0.34], defaultW: -0.85, type: 'neg' },
+        { label: '図書館で缶バッジ交換会',   vec: [ 0.09, -1.00], defaultW: -0.80, type: 'neg' },
+      ];
+      // L2正規化を保証
+      data.forEach(d => { const n = Math.sqrt(d.vec[0]**2 + d.vec[1]**2); d.vec[0] /= n; d.vec[1] /= n; });
+      const M = data.length;
+      const lp_matrix = data.map(d => [d.vec[0], d.vec[1]]);
+
+      const canvas = document.getElementById('centroid-canvas');
+      const ctx = canvas.getContext('2d');
+      const infoEl = document.getElementById('centroid-info');
+      const sliderBox = document.getElementById('sliders-container');
+      const dpr = window.devicePixelRatio || 1;
+      const W = 540, H = 540;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.scale(dpr, dpr);
+      const cx = W / 2, cy = H / 2, R = 195;
+      const toSx = x => cx + x * R;
+      const toSy = y => cy - y * R;
+
+      // ── スライダー生成 ──
+      data.forEach((d, i) => {
+        const row = document.createElement('div'); row.style.cssText = 'margin-bottom:8px;';
+        const top = document.createElement('div'); top.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;';
+        const nm = document.createElement('span');
+        nm.style.cssText = "font-family:'Noto Sans JP',sans-serif;font-size:11px;color:" + (d.type === 'pos' ? '#7ee787' : '#ff7b72') + ";";
+        nm.textContent = (d.type === 'pos' ? '+ ' : '- ') + d.label;
+        const vl = document.createElement('span'); vl.id = 'val-' + i;
+        vl.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b949e;min-width:44px;text-align:right;";
+        vl.textContent = d.defaultW.toFixed(2);
+        top.appendChild(nm); top.appendChild(vl);
+        const sl = document.createElement('input');
+        sl.type = 'range'; sl.min = '-1'; sl.max = '1'; sl.step = '0.01'; sl.value = d.defaultW; sl.id = 'slider-' + i;
+        sl.style.cssText = 'width:100%;height:4px;-webkit-appearance:none;appearance:none;background:#2a3040;border-radius:2px;outline:none;cursor:pointer;';
+        sl.addEventListener('input', () => requestAnimationFrame(draw));
+        row.appendChild(top); row.appendChild(sl); sliderBox.appendChild(row);
+      });
+      const ss = document.createElement('style');
+      ss.textContent = "#sliders-container input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#c9d1d9;border:2px solid #0e1117;cursor:pointer;}#sliders-container input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#c9d1d9;border:2px solid #0e1117;cursor:pointer;}#sliders-container::-webkit-scrollbar{width:5px}#sliders-container::-webkit-scrollbar-track{background:transparent}#sliders-container::-webkit-scrollbar-thumb{background:#2a3040;border-radius:3px}";
+      document.head.appendChild(ss);
+
+      document.getElementById('btn-cancel').addEventListener('click', () => {
+        data.forEach((d, i) => { document.getElementById('slider-' + i).value = (d.type === 'pos') ? 0.5 : -0.5; });
+        requestAnimationFrame(draw);
+      });
+
+      // ================================================================
+      // draw()
+      // ================================================================
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // ── Step A: 生の重み取得 ──
+        const rawW = data.map((_, i) => parseFloat(document.getElementById('slider-' + i).value));
+
+        // ── Step B: L1正規化 → lp_vector (1×M) ──
+        const absSum = rawW.reduce((s, w) => s + Math.abs(w), 0);
+        const lp_vector = absSum < 1e-10 ? rawW.map(() => 0) : rawW.map(w => w / absSum);
+
+        // ── Step C: centroid = lp_vector @ lp_matrix  (1×M) @ (M×2) → (1×2) ──
+        const centroid = [0, 0];
+        for (let i = 0; i < M; i++) {
+          centroid[0] += lp_vector[i] * lp_matrix[i][0];
+          centroid[1] += lp_vector[i] * lp_matrix[i][1];
+        }
+        const centNorm = Math.sqrt(centroid[0] ** 2 + centroid[1] ** 2);
+        const centSx = toSx(centroid[0]), centSy = toSy(centroid[1]);
+
+        // ── 背景グリッド ──
+        ctx.strokeStyle = 'rgba(42,48,64,0.4)'; ctx.lineWidth = 0.5;
+        for (let g = -1; g <= 1; g += 0.25) {
+          ctx.beginPath(); ctx.moveTo(toSx(g), toSy(-1.15)); ctx.lineTo(toSx(g), toSy(1.15)); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(toSx(-1.15), toSy(g)); ctx.lineTo(toSx(1.15), toSy(g)); ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(42,48,64,0.8)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(toSx(-1.15), toSy(0)); ctx.lineTo(toSx(1.15), toSy(0)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(toSx(0), toSy(-1.15)); ctx.lineTo(toSx(0), toSy(1.15)); ctx.stroke();
+        ctx.font = "9px 'JetBrains Mono'"; ctx.fillStyle = '#8b949e';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('x', toSx(1.12), toSy(0) + 14);
+        ctx.textAlign = 'center'; ctx.fillText('y', toSx(0) - 14, toSy(1.12));
+
+        ctx.font = "10px 'Noto Sans JP'"; ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(126,231,135,0.25)'; ctx.textBaseline = 'top';
+        ctx.fillText('positive 領域 (y > 0)', toSx(1.1), toSy(1.1));
+        ctx.fillStyle = 'rgba(255,123,114,0.25)'; ctx.textBaseline = 'bottom';
+        ctx.fillText('negative 領域 (y < 0)', toSx(1.1), toSy(-1.1));
+
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(88,166,255,0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.font = "9px 'JetBrains Mono'"; ctx.fillStyle = 'rgba(88,166,255,0.45)';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('単位円 ||e|| = 1', toSx(0.6), toSy(0.83));
+
+        // ── 寄与線（各点→重心）──
+        data.forEach((d, i) => {
+          const nw = lp_vector[i];
+          if (Math.abs(nw) < 0.003) return;
+          const alpha = Math.min(Math.abs(nw) * 2.5, 0.55);
+          ctx.beginPath();
+          ctx.moveTo(toSx(d.vec[0]), toSy(d.vec[1]));
+          ctx.lineTo(centSx, centSy);
+          ctx.strokeStyle = nw >= 0 ? 'rgba(126,231,135,' + alpha + ')' : 'rgba(255,123,114,' + alpha + ')';
+          ctx.lineWidth = Math.abs(nw) * 6 + 0.5;
+          ctx.stroke();
+        });
+
+        // ── 各ベクトル e_i ──
+        data.forEach((d, i) => {
+          const ex = d.vec[0], ey = d.vec[1], sx = toSx(ex), sy = toSy(ey);
+          const w = rawW[i], isPos = w >= 0;
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sx, sy);
+          ctx.strokeStyle = isPos ? 'rgba(126,231,135,0.3)' : 'rgba(255,123,114,0.3)';
+          ctx.lineWidth = 1; ctx.stroke();
+          const pr = 4 + Math.abs(w) * 5;
+          ctx.beginPath(); ctx.arc(sx, sy, pr + 3, 0, Math.PI * 2);
+          ctx.fillStyle = isPos ? 'rgba(126,231,135,0.1)' : 'rgba(255,123,114,0.1)'; ctx.fill();
+          ctx.beginPath(); ctx.arc(sx, sy, pr, 0, Math.PI * 2);
+          ctx.fillStyle = isPos ? '#7ee787' : '#ff7b72'; ctx.fill();
+          ctx.strokeStyle = '#0e1117'; ctx.lineWidth = 1.5; ctx.stroke();
+          const lr = 1.08 + Math.abs(w) * 0.05;
+          ctx.font = "9.5px 'Noto Sans JP'";
+          ctx.fillStyle = isPos ? 'rgba(126,231,135,0.75)' : 'rgba(255,123,114,0.75)';
+          ctx.textAlign = (ex >= 0) ? 'left' : 'right'; ctx.textBaseline = 'middle';
+          var lb = d.label; if (lb.length > 9) lb = lb.slice(0, 9) + '\u2026';
+          ctx.fillText(lb, toSx(ex * lr), toSy(ey * lr));
+        });
+
+        // ── 重心ベクトル ──
+        if (centNorm > 0.005) {
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(centSx, centSy);
+          ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 3.5; ctx.stroke();
+          var ang = Math.atan2(centSy - cy, centSx - cx);
+          ctx.beginPath(); ctx.moveTo(centSx, centSy);
+          ctx.lineTo(centSx - 14 * Math.cos(ang - 0.4), centSy - 14 * Math.sin(ang - 0.4));
+          ctx.lineTo(centSx - 14 * Math.cos(ang + 0.4), centSy - 14 * Math.sin(ang + 0.4));
+          ctx.closePath(); ctx.fillStyle = '#e3b341'; ctx.fill();
+          drawStar(centSx, centSy, 12, '#e3b341');
+          ctx.font = "bold 11px 'JetBrains Mono'"; ctx.fillStyle = '#e3b341';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText('\u91cd\u5fc3', centSx + 16, centSy - 4);
+          ctx.font = "10px 'JetBrains Mono'"; ctx.fillStyle = 'rgba(227,179,65,0.7)';
+          ctx.fillText('(' + centroid[0].toFixed(3) + ', ' + centroid[1].toFixed(3) + ')', centSx + 16, centSy + 12);
+          ctx.fillText('||v|| = ' + centNorm.toFixed(3), centSx + 16, centSy + 26);
+        }
+
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fillStyle = '#8b949e'; ctx.fill();
+        ctx.font = "9px 'JetBrains Mono'"; ctx.fillStyle = '#8b949e';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('\u539f\u70b9(0,0)', cx + 6, cy + 4);
+
+        // ── 情報テキスト ──
+        var posC = rawW.filter(function(w){return w > 0;}).length;
+        var negC = rawW.filter(function(w){return w < 0;}).length;
+        infoEl.innerHTML =
+          '<div style="margin-bottom:6px;"><span style="color:var(--accent);">\u8a08\u7b97:</span> ' +
+          '<code style="font-size:11px;background:var(--code-bg);padding:2px 6px;border-radius:3px;color:#e3b341;">centroid = lp_vector @ lp_matrix</code>' +
+          ' <span style="color:var(--text-muted);font-size:10px;">(1\u00d7' + M + ') @ (' + M + '\u00d72) \u2192 (1\u00d72)</span></div>' +
+          '<span style="color:#e3b341;">\u91cd\u5fc3 = (' + centroid[0].toFixed(4) + ', ' + centroid[1].toFixed(4) + ')</span>' +
+          '<span style="margin:0 8px;color:var(--border);">|</span>' +
+          '<span style="color:#e3b341;">||v|| = ' + centNorm.toFixed(4) + '</span><br>' +
+          '<span style="color:#7ee787;">positive: ' + posC + '\u500b</span>' +
+          '<span style="margin:0 8px;color:var(--border);">|</span>' +
+          '<span style="color:#ff7b72;">negative: ' + negC + '\u500b</span><br>' +
+          '<span style="color:#8b949e;">\u2192 ' +
+          (centNorm < 0.12 ? '<span style="color:#ff7b72;">\u91cd\u5fc3\u304c\u5c0f\u3055\u3044\uff08\u6b63\u8ca0\u304c\u6253\u3061\u6d88\u3057\u5408\u3063\u3066\u3044\u308b\uff09</span>'
+            : centNorm < 0.35 ? '<span style="color:#ffa657;">\u4e2d\u7a0b\u5ea6\u306e\u5927\u304d\u3055</span>'
+            : '<span style="color:#7ee787;">\u91cd\u5fc3\u304c\u5927\u304d\u3044\uff08\u30b7\u30fc\u30f3\u304c\u4e00\u8cab\u3057\u305f\u65b9\u5411\u3092\u5411\u3044\u3066\u3044\u308b\uff09</span>') +
+          '</span>';
+
+        data.forEach(function(_, i) {
+          var v = rawW[i], el = document.getElementById('val-' + i);
+          el.textContent = v.toFixed(2); el.style.color = v >= 0 ? '#7ee787' : '#ff7b72';
+        });
+
+        // ================================================================
+        // 計算過程のリアルタイム表示
+        // ================================================================
+        var traceB = document.getElementById('trace-step-b');
+        var traceC = document.getElementById('trace-step-c');
+        var traceR = document.getElementById('trace-result');
+
+        // ── Step B: L1正規化の過程 ──
+        var rawStr = rawW.map(function(w){ return '<span style="color:' + (w >= 0 ? '#7ee787' : '#ff7b72') + ';">' + (w >= 0 ? '+' : '') + w.toFixed(2) + '</span>'; }).join(', ');
+        var normStr = lp_vector.map(function(w){ return '<span style="color:' + (w >= 0 ? '#7ee787' : '#ff7b72') + ';">' + (w >= 0 ? '+' : '') + w.toFixed(4) + '</span>'; }).join(', ');
+        traceB.innerHTML =
+          '<div style="color:var(--green);font-weight:600;margin-bottom:4px;">Step B: L1\u6b63\u898f\u5316</div>' +
+          '<div style="color:#8b949e;margin-bottom:4px;">lp_weights_raw = [' + rawStr + ']</div>' +
+          '<div style="color:#8b949e;margin-bottom:4px;">\u2211|w| = <span style="color:var(--text);">' + absSum.toFixed(4) + '</span></div>' +
+          '<div style="color:#8b949e;">lp_vector = [' + normStr + ']</div>';
+
+        // ── Step C: 行列積の過程（上位寄与の展開表示）──
+        // 各キーワードの寄与 = lp_vector[i] * lp_matrix[i]
+        var contributions = [];
+        for (var ci = 0; ci < M; ci++) {
+          var cx_val = lp_vector[ci] * lp_matrix[ci][0];
+          var cy_val = lp_vector[ci] * lp_matrix[ci][1];
+          contributions.push({ idx: ci, w: lp_vector[ci], cx: cx_val, cy: cy_val, mag: Math.sqrt(cx_val*cx_val + cy_val*cy_val) });
+        }
+        // 寄与の大きい順に上位5件を表示
+        contributions.sort(function(a, b){ return b.mag - a.mag; });
+        var topN = contributions.slice(0, 5);
+        var contribLines = topN.map(function(c) {
+          var d = data[c.idx];
+          var col = d.type === 'pos' ? '#7ee787' : '#ff7b72';
+          var label = d.label.length > 12 ? d.label.slice(0, 12) + '\u2026' : d.label;
+          return '<span style="color:' + col + ';">' + label + '</span>' +
+            ' <span style="color:#8b949e;">\u2192 ' + c.w.toFixed(4) + ' \u00d7 (' + lp_matrix[c.idx][0].toFixed(3) + ', ' + lp_matrix[c.idx][1].toFixed(3) + ') = </span>' +
+            '<span style="color:#e3b341;">(' + c.cx.toFixed(4) + ', ' + c.cy.toFixed(4) + ')</span>';
+        }).join('<br>');
+        traceC.innerHTML =
+          '<div style="color:var(--orange);font-weight:600;margin-bottom:4px;">Step C: \u884c\u5217\u7a4d centroid = lp_vector @ lp_matrix <span style="font-weight:400;color:#8b949e;">(1\u00d7' + M + ') @ (' + M + '\u00d72) \u2192 (1\u00d72)</span></div>' +
+          '<div style="color:#8b949e;margin-bottom:4px;">\u5404\u30ad\u30fc\u30ef\u30fc\u30c9\u306e\u5bc4\u4e0e\uff08\u4e0a\u4f4d5\u4ef6\uff09:</div>' +
+          '<div style="margin-left:12px;margin-bottom:6px;">' + contribLines + '</div>' +
+          '<div style="color:#8b949e;">\u5168' + M + '\u4ef6\u306e\u5408\u8a08 \u2192 centroid = <span style="color:#e3b341;font-weight:600;">(' + centroid[0].toFixed(4) + ', ' + centroid[1].toFixed(4) + ')</span></div>';
+
+        // ── Result ──
+        var normColor = centNorm < 0.12 ? '#ff7b72' : centNorm < 0.35 ? '#ffa657' : '#7ee787';
+        var normMsg = centNorm < 0.12 ? '\u6b63\u8ca0\u304c\u6253\u3061\u6d88\u3057\u5408\u3044\u3001\u91cd\u5fc3\u304c\u5c0f\u3055\u3044' : centNorm < 0.35 ? '\u4e2d\u7a0b\u5ea6\u306e\u5927\u304d\u3055' : '\u30b7\u30fc\u30f3\u304c\u4e00\u8cab\u3057\u305f\u65b9\u5411\u3092\u5411\u3044\u3066\u304a\u308a\u3001\u91cd\u5fc3\u304c\u5927\u304d\u3044';
+        traceR.innerHTML =
+          '<div style="border-top:1px solid var(--border);padding-top:10px;">' +
+          '<span style="color:#e3b341;font-weight:600;">||centroid|| = ' + centNorm.toFixed(4) + '</span>' +
+          ' <span style="color:#8b949e;">\u2192</span> ' +
+          '<span style="color:' + normColor + ';">' + normMsg + '</span>' +
+          '</div>';
+      }
+
+      function drawStar(x, y, size, color) {
+        ctx.beginPath();
+        for (var i = 0; i < 10; i++) {
+          var r = i % 2 === 0 ? size : size * 0.45;
+          var a = (i * Math.PI / 5) - Math.PI / 2;
+          if (i === 0) ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+          else ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+        }
+        ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle = '#0e1117'; ctx.lineWidth = 2; ctx.stroke();
+      }
+
+      draw();
+    })();
+    </script>
+
+    <!-- ──────────────────────────────── -->
+    <!-- Phase 2: Spot similarity -->
+    <!-- ──────────────────────────────── -->
+    <h3>後半：コホート施設との類似度算出</h3>
+
+    <div class="math-block">
+      $$\underbrace{\vec{lp\_coefficient}}_{1 \times S} \;=\; \underbrace{\vec{v}_{\text{centroid}}}_{1 \times 1024} \;\cdot\; \underbrace{spots\_matrix^\top}_{1024 \times S}$$
+    </div>
+
+    <!-- Phase 2 diagram -->
+    <div class="pipeline-wrap" style="padding:24px 16px;">
+      <svg viewBox="0 0 800 210" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+        <!-- centroid -->
+        <rect x="20" y="20" width="220" height="64" rx="8" fill="rgba(227,179,65,0.08)" stroke="#e3b341" stroke-width="1.3"/>
+        <text x="130" y="42" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="10" font-weight="600">v_centroid</text>
+        <text x="130" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1 × 1024</text>
+        <text x="130" y="76" text-anchor="middle" fill="#e3b341" font-family="JetBrains Mono" font-size="8">⚠ 非正規化（大きさに情報あり）</text>
+
+        <text x="266" y="54" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="18">·</text>
+
+        <!-- spots_matrix.T -->
+        <rect x="290" y="20" width="210" height="64" rx="8" fill="none" stroke="#7ee787" stroke-width="1.3"/>
+        <text x="395" y="42" text-anchor="middle" fill="#7ee787" font-family="JetBrains Mono" font-size="10" font-weight="500">spots_matrix.T</text>
+        <text x="395" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1024 × S</text>
+        <text x="395" y="76" text-anchor="middle" fill="#7ee787" font-family="JetBrains Mono" font-size="8">✓ L2正規化済み（方向のみ）</text>
+
+        <text x="526" y="54" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="18">=</text>
+
+        <!-- result -->
+        <rect x="550" y="16" width="220" height="72" rx="10" fill="rgba(255,166,87,0.08)" stroke="#ffa657" stroke-width="1.5"/>
+        <text x="660" y="38" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="10" font-weight="600">lp_coefficient</text>
+        <text x="660" y="58" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1 × S</text>
+        <text x="660" y="78" text-anchor="middle" fill="#ffa657" font-family="Noto Sans JP" font-size="10" font-weight="500">LP のスポット親和度スコア</text>
+
+        <!-- key insight box -->
+        <rect x="40" y="114" width="700" height="80" rx="8" fill="rgba(255,166,87,0.04)" stroke="rgba(255,166,87,0.18)" stroke-width="1"/>
+        <text x="390" y="136" text-anchor="middle" fill="#ffa657" font-family="Noto Sans JP" font-size="12" font-weight="700">正規化の非対称性がスコアの性質を決める</text>
+        <text x="390" y="158" text-anchor="middle" fill="#c9d1d9" font-family="Noto Sans JP" font-size="11">v_centroid は<tspan fill="#e3b341" font-weight="500">非正規化</tspan>（大きさを保持） × spots_matrix は<tspan fill="#7ee787" font-weight="500">L2正規化済み</tspan>（方向のみ）</text>
+        <text x="390" y="178" text-anchor="middle" fill="#c9d1d9" font-family="Noto Sans JP" font-size="11">→ 内積は<tspan fill="#ffa657" font-weight="500">「重心の大きさ」×「重心とスポットの方向の近さ」</tspan>を同時に反映する</text>
+      </svg>
+    </div>
+
+    <p>$spots\_matrix$ の各行ベクトル $\vec{s}_j$ は L2 正規化済み（$\|\vec{s}_j\| = 1$）であるのに対し、重心ベクトル $\vec{v}_{\text{centroid}}$ は正規化されて<em>いない</em>。<br>そのため、この内積は純粋なコサイン類似度<em>ではなく</em>、以下の 2 つの要素を同時に反映する：</p>
+
+    <div class="math-block">
+      $$c_j = \vec{v}_{\text{centroid}} \cdot \vec{s}_j = \|\vec{v}_{\text{centroid}}\| \;\cdot\; \underbrace{\cos\theta_j}_{\text{方向の近さ}}$$
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>要素</th><th>数式上の対応</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><strong>重心の大きさ</strong></td><td>$\|\vec{v}_{\text{centroid}}\|$</td><td>LP の商品シーンがどれだけ<strong>一貫した方向</strong>を向いているか。positive/negative が互いに打ち消し合うと小さくなる</td></tr>
+        <tr><td><strong>方向の近さ</strong></td><td>$\cos\theta_j$</td><td>LP の重心方向とコホート施設 $j$ の<strong>意味的な類似度</strong></td></tr>
+        <tr><td><strong>積 = スコア</strong></td><td>$c_j$</td><td>LP にとって施設 $j$ がどれだけ<strong>重要</strong>か。重心に近い施設ほど高スコアになる</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- INTERACTIVE: Projection / Dot Product Viz       -->
+    <!-- ════════════════════════════════════════════════ -->
+    <h3>🎮 インタラクティブ：重心ベクトルとスポットの内積を体験する</h3>
+    <p>黄色い矢印（重心ベクトル）の<strong>先端をドラッグ</strong>して動かしてみてください。単位円上の各スポット（緑の点）への<strong>射影</strong>（点線）がリアルタイムに変化し、それが各スポットのスコアになります。</p>
+
+    <div id="proj-app" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0;">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+        <div style="flex:1;min-width:360px;">
+          <canvas id="proj-canvas" width="540" height="540" style="width:100%;max-width:540px;height:auto;border-radius:8px;background:#0d1117;display:block;cursor:grab;"></canvas>
+        </div>
+        <div style="flex:0 0 300px;min-width:240px;">
+          <div style="font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;color:var(--text-bright);margin-bottom:10px;">スポット別スコア（リアルタイム）</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">$c_j = \vec{v}_{\text{centroid}} \cdot \vec{s}_j$<br>= 重心ベクトルとスポットの内積</div>
+          <div id="proj-scores" style="max-height:340px;overflow-y:auto;padding-right:6px;"></div>
+          <div style="margin-top:14px;padding:12px;background:var(--code-bg);border:1px solid var(--border);border-radius:6px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:6px;">LEGEND</div>
+            <div style="font-size:11px;line-height:2;font-family:'Noto Sans JP',sans-serif;">
+              <span style="display:inline-block;width:14px;height:3px;background:#e3b341;border-radius:2px;margin-right:6px;vertical-align:middle;"></span><strong style="color:#e3b341;">重心ベクトル</strong>（ドラッグで移動）<br>
+              <span style="display:inline-block;width:10px;height:10px;background:#7ee787;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>スポット（L2正規化 = 単位円上）<br>
+              <span style="display:inline-block;width:14px;height:2px;background:#ffa657;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>射影（内積 = スコア）<br>
+              <span style="display:inline-block;width:10px;height:3px;background:#58a6ff;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>単位円
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      // ── スポットデータ: 8施設を単位円上に配置 ──
+      const spots = [
+        { label: 'アニメイト池袋',     vec: [ 0.26,  0.97] },
+        { label: '中野ブロードウェイ',  vec: [ 0.81,  0.59] },
+        { label: 'コミケ会場',         vec: [-0.42,  0.91] },
+        { label: 'メイドカフェ秋葉原',  vec: [ 0.97,  0.26] },
+        { label: '東京ドーム',         vec: [-0.87,  0.50] },
+        { label: 'ファミリーレストラン', vec: [ 0.59, -0.81] },
+        { label: '総合病院',           vec: [-0.34, -0.94] },
+        { label: '公立図書館',         vec: [-0.82, -0.57] },
+      ];
+      // L2正規化を保証
+      spots.forEach(s => {
+        const n = Math.sqrt(s.vec[0]**2 + s.vec[1]**2);
+        s.vec[0] /= n; s.vec[1] /= n;
+      });
+
+      // 重心ベクトル（ドラッグで移動可能、非正規化）
+      let centroid = [-0.25, 0.55];
+
+      const canvas = document.getElementById('proj-canvas');
+      const ctx2 = canvas.getContext('2d');
+      const scoresEl = document.getElementById('proj-scores');
+
+      const dpr = window.devicePixelRatio || 1;
+      const W = 540, H = 540;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx2.scale(dpr, dpr);
+
+      const cx = W / 2, cy = H / 2, R = 200;
+      const toSx = x => cx + x * R;
+      const toSy = y => cy - y * R;
+      const fromSx = sx => (sx - cx) / R;
+      const fromSy = sy => -(sy - cy) / R;
+
+      // ── ドラッグ ──
+      let dragging = false;
+      canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = fromSx((e.clientX - rect.left) * (W / rect.width));
+        const my = fromSy((e.clientY - rect.top) * (H / rect.height));
+        const dx = mx - centroid[0], dy = my - centroid[1];
+        if (dx * dx + dy * dy < 0.06) { dragging = true; canvas.style.cursor = 'grabbing'; }
+      });
+      canvas.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const rect = canvas.getBoundingClientRect();
+        centroid[0] = fromSx((e.clientX - rect.left) * (W / rect.width));
+        centroid[1] = fromSy((e.clientY - rect.top) * (H / rect.height));
+        // 範囲制限
+        const maxR = 1.1;
+        const cn = Math.sqrt(centroid[0]**2 + centroid[1]**2);
+        if (cn > maxR) { centroid[0] *= maxR / cn; centroid[1] *= maxR / cn; }
+        requestAnimationFrame(drawProj);
+      });
+      canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
+      canvas.addEventListener('mouseleave', () => { dragging = false; canvas.style.cursor = 'grab'; });
+      // タッチ対応
+      canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        const mx = fromSx((t.clientX - rect.left) * (W / rect.width));
+        const my = fromSy((t.clientY - rect.top) * (H / rect.height));
+        const dx = mx - centroid[0], dy = my - centroid[1];
+        if (dx * dx + dy * dy < 0.1) dragging = true;
+      }, {passive: false});
+      canvas.addEventListener('touchmove', e => {
+        if (!dragging) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        centroid[0] = fromSx((t.clientX - rect.left) * (W / rect.width));
+        centroid[1] = fromSy((t.clientY - rect.top) * (H / rect.height));
+        const maxR = 1.1;
+        const cn = Math.sqrt(centroid[0]**2 + centroid[1]**2);
+        if (cn > maxR) { centroid[0] *= maxR / cn; centroid[1] *= maxR / cn; }
+        requestAnimationFrame(drawProj);
+      }, {passive: false});
+      canvas.addEventListener('touchend', () => { dragging = false; });
+
+      // ── 描画 ──
+      function drawProj() {
+        ctx2.clearRect(0, 0, W, H);
+        const centNorm = Math.sqrt(centroid[0]**2 + centroid[1]**2);
+        const centSx = toSx(centroid[0]), centSy = toSy(centroid[1]);
+
+        // グリッド
+        ctx2.strokeStyle = 'rgba(42,48,64,0.4)'; ctx2.lineWidth = 0.5;
+        for (var g = -1; g <= 1; g += 0.25) {
+          ctx2.beginPath(); ctx2.moveTo(toSx(g), toSy(-1.15)); ctx2.lineTo(toSx(g), toSy(1.15)); ctx2.stroke();
+          ctx2.beginPath(); ctx2.moveTo(toSx(-1.15), toSy(g)); ctx2.lineTo(toSx(1.15), toSy(g)); ctx2.stroke();
+        }
+        // 軸
+        ctx2.strokeStyle = 'rgba(42,48,64,0.8)'; ctx2.lineWidth = 1;
+        ctx2.beginPath(); ctx2.moveTo(toSx(-1.15), toSy(0)); ctx2.lineTo(toSx(1.15), toSy(0)); ctx2.stroke();
+        ctx2.beginPath(); ctx2.moveTo(toSx(0), toSy(-1.15)); ctx2.lineTo(toSx(0), toSy(1.15)); ctx2.stroke();
+
+        // 単位円
+        ctx2.beginPath(); ctx2.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx2.strokeStyle = 'rgba(88,166,255,0.3)'; ctx2.lineWidth = 1.5;
+        ctx2.setLineDash([6, 4]); ctx2.stroke(); ctx2.setLineDash([]);
+        ctx2.font = "9px 'JetBrains Mono'"; ctx2.fillStyle = 'rgba(88,166,255,0.4)';
+        ctx2.textAlign = 'left'; ctx2.textBaseline = 'bottom';
+        ctx2.fillText('単位円 ||s|| = 1', toSx(0.58), toSy(0.85));
+
+        // ── スコア計算 & 射影描画 ──
+        var scores = [];
+        spots.forEach(function(s, j) {
+          var sx = s.vec[0], sy = s.vec[1];
+          var ssx = toSx(sx), ssy = toSy(sy);
+
+          // 内積 c_j = centroid · s_j
+          var dotVal = centroid[0] * sx + centroid[1] * sy;
+          scores.push({ idx: j, label: s.label, score: dotVal });
+
+          // 射影点 = dotVal * s_j（スポットベクトル方向に射影した点）
+          var projX = dotVal * sx, projY = dotVal * sy;
+          var projSx = toSx(projX), projSy = toSy(projY);
+
+          // 射影線（重心 → スポット方向への垂直射影）
+          // centroid → 射影点
+          ctx2.beginPath();
+          ctx2.moveTo(centSx, centSy);
+          ctx2.lineTo(projSx, projSy);
+          ctx2.strokeStyle = 'rgba(255,166,87,0.25)';
+          ctx2.lineWidth = 1; ctx2.setLineDash([3, 3]); ctx2.stroke(); ctx2.setLineDash([]);
+
+          // 原点 → 射影点（スコアの長さ）
+          var scoreAlpha = Math.min(Math.abs(dotVal) * 1.5, 0.8);
+          var scoreColor = dotVal >= 0 ? 'rgba(126,231,135,' + scoreAlpha + ')' : 'rgba(255,123,114,' + scoreAlpha + ')';
+          ctx2.beginPath();
+          ctx2.moveTo(cx, cy);
+          ctx2.lineTo(projSx, projSy);
+          ctx2.strokeStyle = scoreColor;
+          ctx2.lineWidth = 3; ctx2.stroke();
+
+          // 射影点マーカー
+          ctx2.beginPath(); ctx2.arc(projSx, projSy, 4, 0, Math.PI * 2);
+          ctx2.fillStyle = dotVal >= 0 ? '#7ee787' : '#ff7b72'; ctx2.fill();
+          ctx2.strokeStyle = '#0e1117'; ctx2.lineWidth = 1; ctx2.stroke();
+
+          // スポット方向の薄い線（原点→単位円上の点）
+          ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(ssx, ssy);
+          ctx2.strokeStyle = 'rgba(126,231,135,0.2)'; ctx2.lineWidth = 1; ctx2.stroke();
+
+          // スポット点
+          ctx2.beginPath(); ctx2.arc(ssx, ssy, 7, 0, Math.PI * 2);
+          ctx2.fillStyle = '#7ee787'; ctx2.fill();
+          ctx2.strokeStyle = '#0e1117'; ctx2.lineWidth = 1.5; ctx2.stroke();
+
+          // ラベル
+          var lr = 1.1;
+          ctx2.font = "10px 'Noto Sans JP'"; ctx2.fillStyle = 'rgba(126,231,135,0.8)';
+          ctx2.textAlign = (sx >= 0) ? 'left' : 'right'; ctx2.textBaseline = 'middle';
+          ctx2.fillText(s.label, toSx(sx * lr), toSy(sy * lr));
+
+          // スコア数値（射影点の近く）
+          ctx2.font = "bold 9px 'JetBrains Mono'";
+          ctx2.fillStyle = dotVal >= 0 ? '#7ee787' : '#ff7b72';
+          ctx2.textAlign = 'center'; ctx2.textBaseline = 'bottom';
+          ctx2.fillText((dotVal >= 0 ? '+' : '') + dotVal.toFixed(3), projSx, projSy - 8);
+        });
+
+        // ── 重心ベクトル（太い矢印）──
+        if (centNorm > 0.005) {
+          ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(centSx, centSy);
+          ctx2.strokeStyle = '#e3b341'; ctx2.lineWidth = 4; ctx2.stroke();
+          var ang = Math.atan2(centSy - cy, centSx - cx);
+          ctx2.beginPath(); ctx2.moveTo(centSx, centSy);
+          ctx2.lineTo(centSx - 16 * Math.cos(ang - 0.35), centSy - 16 * Math.sin(ang - 0.35));
+          ctx2.lineTo(centSx - 16 * Math.cos(ang + 0.35), centSy - 16 * Math.sin(ang + 0.35));
+          ctx2.closePath(); ctx2.fillStyle = '#e3b341'; ctx2.fill();
+
+          // ドラッグ用のハンドル円
+          ctx2.beginPath(); ctx2.arc(centSx, centSy, 10, 0, Math.PI * 2);
+          ctx2.fillStyle = 'rgba(227,179,65,0.3)'; ctx2.fill();
+          ctx2.strokeStyle = '#e3b341'; ctx2.lineWidth = 2; ctx2.stroke();
+
+          ctx2.font = "bold 10px 'JetBrains Mono'"; ctx2.fillStyle = '#e3b341';
+          ctx2.textAlign = 'left'; ctx2.textBaseline = 'middle';
+          ctx2.fillText('重心 (drag me!)', centSx + 16, centSy - 4);
+          ctx2.font = "9px 'JetBrains Mono'"; ctx2.fillStyle = 'rgba(227,179,65,0.6)';
+          ctx2.fillText('||v|| = ' + centNorm.toFixed(3), centSx + 16, centSy + 12);
+        }
+
+        // 原点
+        ctx2.beginPath(); ctx2.arc(cx, cy, 3, 0, Math.PI * 2);
+        ctx2.fillStyle = '#8b949e'; ctx2.fill();
+
+        // ── スコアリスト更新 ──
+        scores.sort(function(a, b) { return b.score - a.score; });
+        var html = '';
+        scores.forEach(function(s, rank) {
+          var barW = Math.min(Math.abs(s.score) * 200, 160);
+          var col = s.score >= 0 ? '#7ee787' : '#ff7b72';
+          var bgCol = s.score >= 0 ? 'rgba(126,231,135,0.1)' : 'rgba(255,123,114,0.1)';
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;margin-bottom:4px;border-radius:4px;background:' + bgCol + ';">';
+          html += '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#8b949e;width:16px;">' + (rank + 1) + '</span>';
+          html += '<span style="font-family:\'Noto Sans JP\',sans-serif;font-size:11px;color:' + col + ';flex:1;">' + s.label + '</span>';
+          html += '<div style="width:80px;height:6px;background:rgba(42,48,64,0.5);border-radius:3px;overflow:hidden;flex-shrink:0;">';
+          html += '<div style="width:' + barW + '%;height:100%;background:' + col + ';border-radius:3px;"></div></div>';
+          html += '<span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:' + col + ';width:52px;text-align:right;">' + (s.score >= 0 ? '+' : '') + s.score.toFixed(3) + '</span>';
+          html += '</div>';
+        });
+        scoresEl.innerHTML = html;
+      }
+
+      // 初期描画
+      drawProj();
+    })();
+    </script>
+
+    <!-- Summary: all 3 matrices -->
+    <h3>行列積の全体像</h3>
+
+    <div class="pipeline-wrap" style="padding:28px 16px;">
+      <svg viewBox="0 0 800 140" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+        <!-- lp_vector -->
+        <rect x="10" y="20" width="130" height="54" rx="8" fill="none" stroke="#58a6ff" stroke-width="1.3"/>
+        <text x="75" y="42" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono" font-size="10" font-weight="500">lp_vector</text>
+        <text x="75" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1 × M</text>
+        <!-- × -->
+        <text x="160" y="52" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="16">·</text>
+        <!-- lp_matrix -->
+        <rect x="180" y="20" width="140" height="54" rx="8" fill="none" stroke="#d2a8ff" stroke-width="1.3"/>
+        <text x="250" y="42" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono" font-size="10" font-weight="500">lp_matrix</text>
+        <text x="250" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">M × 1024</text>
+        <!-- × -->
+        <text x="340" y="52" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="16">·</text>
+        <!-- spots_matrix.T -->
+        <rect x="360" y="20" width="160" height="54" rx="8" fill="none" stroke="#7ee787" stroke-width="1.3"/>
+        <text x="440" y="42" text-anchor="middle" fill="#7ee787" font-family="JetBrains Mono" font-size="10" font-weight="500">spots_matrix.T</text>
+        <text x="440" y="60" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="10">1024 × S</text>
+        <!-- = -->
+        <text x="545" y="52" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="16">=</text>
+        <!-- result -->
+        <rect x="570" y="20" width="170" height="54" rx="8" fill="rgba(255,166,87,0.08)" stroke="#ffa657" stroke-width="1.5"/>
+        <text x="655" y="42" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="10" font-weight="600">lp_coefficient</text>
+        <text x="655" y="60" text-anchor="middle" fill="#ffa657" font-family="JetBrains Mono" font-size="10">1 × S</text>
+
+        <!-- annotations -->
+        <text x="75" y="98" text-anchor="middle" fill="#58a6ff" font-family="Noto Sans JP" font-size="9">重要度（重み）</text>
+        <text x="75" y="112" text-anchor="middle" fill="#58a6ff" font-family="JetBrains Mono" font-size="8">L1正規化</text>
+        <text x="250" y="98" text-anchor="middle" fill="#d2a8ff" font-family="Noto Sans JP" font-size="9">位置ベクトル（埋め込み）</text>
+        <text x="250" y="112" text-anchor="middle" fill="#d2a8ff" font-family="JetBrains Mono" font-size="8">L2正規化</text>
+        <text x="440" y="98" text-anchor="middle" fill="#7ee787" font-family="Noto Sans JP" font-size="9">コホート施設（埋め込み）</text>
+        <text x="440" y="112" text-anchor="middle" fill="#7ee787" font-family="JetBrains Mono" font-size="8">L2正規化</text>
+        <text x="655" y="98" text-anchor="middle" fill="#ffa657" font-family="Noto Sans JP" font-size="9" font-weight="500">LP のスポット親和度</text>
+
+        <!-- bracket: phase 1 -->
+        <line x1="10" y1="130" x2="320" y2="130" stroke="#e3b341" stroke-width="1" stroke-dasharray="4,2"/>
+        <text x="165" y="140" text-anchor="middle" fill="#e3b341" font-family="Noto Sans JP" font-size="8">前半: 重心ベクトル算出</text>
+
+        <!-- bracket: phase 2 -->
+        <line x1="340" y1="130" x2="740" y2="130" stroke="#ffa657" stroke-width="1" stroke-dasharray="4,2"/>
+        <text x="540" y="140" text-anchor="middle" fill="#ffa657" font-family="Noto Sans JP" font-size="8">後半: コホート施設との類似度算出</text>
+      </svg>
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>行列</th><th>形状</th><th>正規化</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><code>lp_vector</code></td><td><span class="shape blue">1 × M</span></td><td>L1</td><td>LLM が出力した商品シーンの重要度（正負付き）</td></tr>
+        <tr><td><code>lp_matrix</code></td><td><span class="shape purple">M × 1024</span></td><td>L2</td><td>各商品シーンの埋め込みベクトル（単位球面上の位置）</td></tr>
+        <tr><td><code>spots_matrix.T</code></td><td><span class="shape green">1024 × S</span></td><td>L2</td><td>各コホート施設の埋め込みベクトル</td></tr>
+        <tr><td><strong><code>lp_coefficient</code></strong></td><td><span class="shape orange">1 × S</span></td><td>—</td><td><strong>LP にとって重要なコホート施設のスコア</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-block"><span class="vr">lp_coefficient</span> = <span class="vr">lp_vector</span> @ <span class="vr">lp_matrix</span> @ <span class="vr">spots_matrix</span>.T   <span class="cmt"># (1×M) @ (M×1024) @ (1024×S) = (1×S)</span></div>
+
+    <div class="note insight">
+      <strong>💡 直感的な理解：</strong>この行列積は「LP（ランディングページ）にとって重要なコホート施設はどれか」を、重心からの距離で計算している。LLM が「このシーンに合う」と判断した商品シーンほど重心を強く引き寄せ、その重心に意味的に近いコホート施設が高いスコアを得る。逆に negative シーンは重心を逆方向に押し出すため、negative に近い施設はスコアが低くなる。
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- STEP 5 -->
+<!-- ============================================================ -->
+<section>
+  <div class="step">
+    <div class="step-badge s5">STEP 5</div>
+    <div class="step-title">L2 正規化</div>
+
+    <p><code>lp_coefficient</code> の<strong>方向</strong>（各スポットへの相対的な親和度の比率）はそのままに、ベクトルの長さを 1 に揃える。<br>後続のコサイン類似度計算との整合性を保つため。</p>
+
+    <div class="math-block">
+      $$\vec{lp\_coefficient}_{L2} = \frac{\vec{lp\_coefficient}}{\|\vec{lp\_coefficient}\|_2} = \frac{\vec{lp\_coefficient}}{\sqrt{\displaystyle\sum_{j=1}^{S} c_j^2}}$$
+    </div>
+
+    <div class="code-block"><span class="vr">l2norm_vector</span>  = np.linalg.<span class="fn">norm</span>(<span class="vr">lp_coefficient</span>, axis=<span class="num">1</span>, keepdims=<span class="kw">True</span>)
+<span class="vr">lp_coefficient</span> = <span class="vr">lp_coefficient</span> / np.<span class="fn">maximum</span>(<span class="vr">l2norm_vector</span>, <span class="num">1e-10</span>)</div>
+
+    <div class="note">
+      <strong>np.maximum(..., 1e-10) について：</strong>ゼロベクトルでの除算を防ぐガード処理。実運用では全キーワードが同一ベクトルに写像されない限り発生しないが、防御的コーディングとして必須。
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- MEMORY -->
+<!-- ============================================================ -->
+<section>
+  <div class="step" style="border-color:var(--border);">
+    <div class="step-badge" style="background:var(--text-muted);">CLEANUP</div>
+    <div class="step-title">メモリ管理</div>
+    <p>大規模行列と Embedding モデルを明示的に解放し、GC を起動する。<br>特に <code>spots_matrix</code>（S × 1024）と <code>model</code>（BGE-M3）は数百 MB〜GB 級のメモリを占有するため、不要になった時点で即座に開放する。</p>
+    <div class="code-block"><span class="kw">del</span> <span class="vr">spots_matrix</span>
+<span class="kw">del</span> <span class="vr">model</span>, <span class="vr">lp_matrix</span>
+<span class="kw">del</span> <span class="vr">l2norm_vector</span>
+gc.<span class="fn">collect</span>()</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FULL FORMULA -->
+<!-- ============================================================ -->
+<section>
+  <h2>統合数式</h2>
+  <p>全ステップを 1 行にまとめると：</p>
+  <div class="math-block">
+    $$\vec{lp\_coefficient} = \text{normalize}_{L_2}\!\left(\;\frac{\vec{w}_{\text{raw}}}{\|\vec{w}_{\text{raw}}\|_1} \;\cdot\; \text{BGE-M3}(\text{keywords}) \;\cdot\; S^\top\;\right)$$
+  </div>
+  <p>Shape の変化を追うと：</p>
+  <div class="math-block">
+    $$\underbrace{\vec{w}}_{1 \times M} \;\cdot\; \underbrace{E}_{M \times 1024} \;\cdot\; \underbrace{S^\top}_{1024 \times S} \;=\; \underbrace{\vec{c}_{\text{raw}}}_{1 \times S} \;\xrightarrow{\;L_2\;}\; \underbrace{\vec{c}}_{1 \times S}$$
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIABLE TABLE -->
+<!-- ============================================================ -->
+<section>
+  <h2>コード ↔ 数式 対応表</h2>
+  <table class="data-table">
+    <thead><tr><th>コード変数</th><th>数式記号</th><th>Shape</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>lp_keywords</code></td><td>$\text{keywords}$</td><td>長さ $M$ のリスト</td><td>キーワード文字列の配列</td></tr>
+      <tr><td><code>lp_weights</code> <span style="color:var(--text-muted);">(正規化前)</span></td><td>$\vec{w}_{\text{raw}}$</td><td><span class="shape blue">M</span></td><td>positive 正・negative 負の重み</td></tr>
+      <tr><td><code>total_weight</code></td><td>$\|\vec{w}_{\text{raw}}\|_1$</td><td>スカラー</td><td>重みの絶対値の総和</td></tr>
+      <tr><td><code>lp_weights</code> <span style="color:var(--text-muted);">(正規化後)</span></td><td>$\vec{w}$</td><td><span class="shape blue">M</span></td><td>L1 正規化後の重み</td></tr>
+      <tr><td><code>lp_vector</code></td><td>$\vec{w}$（reshape 後）</td><td><span class="shape blue">1 × M</span></td><td>行列積のため 2 次元化</td></tr>
+      <tr><td><code>lp_matrix</code></td><td>$E$</td><td><span class="shape purple">M × 1024</span></td><td>キーワードの埋め込み行列</td></tr>
+      <tr><td><code>spots_matrix</code></td><td>$S$</td><td><span class="shape green">S × 1024</span></td><td>スポットの埋め込み行列（事前計算済み）</td></tr>
+      <tr><td><code>spots_matrix.T</code></td><td>$S^\top$</td><td><span class="shape green">1024 × S</span></td><td>スポット行列の転置</td></tr>
+      <tr><td><code>lp_coefficient</code> <span style="color:var(--text-muted);">(正規化前)</span></td><td>$\vec{c}_{\text{raw}}$</td><td><span class="shape orange">1 × S</span></td><td>LP 係数ベクトル（未正規化）</td></tr>
+      <tr><td><code>l2norm_vector</code></td><td>$\|\vec{c}_{\text{raw}}\|_2$</td><td>スカラー</td><td>L2 ノルム</td></tr>
+      <tr><td><code>lp_coefficient</code> <span style="color:var(--text-muted);">(正規化後)</span></td><td>$\vec{c}$</td><td><span class="shape orange">1 × S</span></td><td>最終 LP 係数ベクトル（単位ベクトル）</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <div class="container">LP coefficient computation — internal technical documentation</div>
+</footer>
+
+</div>
+</body>
+</html>
